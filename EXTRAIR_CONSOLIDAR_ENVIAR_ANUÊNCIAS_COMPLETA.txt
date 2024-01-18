@@ -1,0 +1,247 @@
+def anu():
+    try:
+        !pip install selenium
+        import selenium
+        from selenium import webdriver
+        from selenium.webdriver.common.by import By
+        import time
+        from time import sleep
+        from selenium.webdriver.support.select import Select
+        from selenium.webdriver.support.ui import WebDriverWait
+        from selenium.webdriver.support import expected_conditions as EC
+        !pip install pyautogui
+        import pyautogui
+        import os
+        import shutil
+        import datetime
+        from datetime import datetime,timedelta
+        import copy
+        !pip install pandas
+        import pandas as pd
+        import smtplib
+        from email.mime.multipart import MIMEMultipart
+        from email.mime.text import MIMEText
+        from email.mime.application import MIMEApplication
+        import schedule
+
+        #Função para Extração, consolidação e envio de e-mail
+    
+        a=0
+        b=0
+        lotação = r'Z:\ANUÊNCIAS\LOTA-COMPLETO.xlsx'
+        read_lotação = pd.read_excel(lotação)
+        lotação_2 = copy.deepcopy(read_lotação)
+        df_lotação_2 = pd.DataFrame(lotação_2)
+    
+        while a<len(df_lotação_2):
+            browser = webdriver.Chrome()
+            browser.implicitly_wait(2400)
+            browser.get('http://elip.recife.pe.gov.br/elip/paginas/public/loginExterno.xhtml')
+            browser.maximize_window()
+            cnpj = browser.find_element(By.XPATH, "//input[@id ='autenticacao:cnpjUsuario']")
+            senha = browser.find_element(By.XPATH, "//input[@id='autenticacao:senhaUsuario']")
+            login = browser.find_element(By.XPATH, "//span[@class='ui-button-text ui-c'] [1]")
+            time.sleep(2)
+            cnpj.send_keys("09.769.035/0001-64")
+            time.sleep(2)
+            senha.send_keys("Compes@123")
+            time.sleep(2)
+            login.click()
+            time.sleep(5)
+ 
+            lota = browser.find_element(By.XPATH, df_lotação_2.iat[a,1])
+            browser.execute_script("arguments[0].click();", lota)
+            entrar = browser.find_element(By.XPATH, '//*[@id="escolherArea:j_id_12"]/span')
+            time.sleep(1)
+            entrar.click()
+            relatorios = browser.find_element(By.XPATH, '//*[@id="j_id_w:j_id_x"]/ul/li[3]/ul/li/a/span')
+            browser.execute_script("arguments[0].click();", relatorios)
+            situacao = browser.find_element(By.XPATH, df_lotação_2.iat[a,2])
+            browser.execute_script("arguments[0].click();", situacao)
+            Gerar_planilha = browser.find_element(By.XPATH, '//*[@id="gerarPlanilhaAnuenciaForm:j_id_2w"]/span')
+            Gerar_planilha.click()
+            time.sleep(10)
+            
+            a+=1
+        
+        browser.quit()
+        
+    
+
+        #Concatenar as extrações
+        # Defina o diretório da pasta de origem e de destino
+        pasta_origem = r'C:\xxx/xxx\xxx'
+        pasta_destino =  r'C:\xxx\xxx\xxx\xxx\xxx\xxx\xxx'
+        dia = str(datetime.datetime.now().date())
+
+        # Parte do nome que os arquivos devem conter
+        parte_do_nome = dia  # Substitua por sua parte do nome desejada
+
+        # Lista todos os arquivos na pasta de origem
+        arquivos = os.listdir(pasta_origem)
+
+        # Loop pelos arquivos e move aqueles que contêm a parte do nome
+        for arquivo in arquivos:
+            if parte_do_nome in arquivo:
+                origem_arquivo = os.path.join(pasta_origem, arquivo)
+                destino_arquivo = os.path.join(pasta_destino, arquivo)
+                try:
+                    shutil.move(origem_arquivo, destino_arquivo)
+                    print("Arquivo",arquivo,"movido com sucesso.")
+                except Exception as e:
+                    print("Erro ao mover o arquivo","arquivo:", str(e))
+
+
+                # Lista para armazenar os dados de cada planilha
+                dados = []
+
+
+        # Número de linhas para pular no início de cada planilha
+        linhas_para_pular = 8
+
+        # Lista todos os arquivos na pasta de destino
+        anuências = os.listdir(pasta_destino)
+
+        # Ler cada arquivo, pular as linhas iniciais e armazenar os dados na lista
+        for anuência in anuências:
+            if anuência.endswith('.xlsx') and not anuência.startswith('~$'):
+                anuência_arquivo= os.path.join(pasta_destino, anuência)
+                df = pd.read_excel(anuência_arquivo, skiprows=linhas_para_pular)
+                dados.append(df)
+
+        # Concatenar todos os dados em uma única planilha
+        plan_final = pd.concat(dados, axis=0, ignore_index=True)
+        cópia = copy.deepcopy(plan_final)
+        final = r'Z:\xxx\xxx\xxx.xlsx'
+        final1 = r'Z:\xxx\xxx.xlsx'
+        plan_final.to_excel(final1, index=False)
+        cópia.to_excel(final,index=False)
+    
+        #Apagar downloads
+    
+        import glob
+    
+        pasta = r'C:\Users\eduardomorais\Downloads'
+        files = glob.glob(pasta+'/*')
+        for file in files:
+            os.remove(file)
+   
+
+        # Configurar as informações do servidor SMTP
+        smtp_server = 'webmail.compesa.com.br'
+        smtp_port = 587  # Porta típica para envio de e-mails seguro (TLS)
+        smtp_username = 'xxxxxx'
+        smtp_password = 'xxxxxx'
+
+        # Configurar as informações do e-mail
+        sender_email = 'xxx@xxx.com.br'
+        recipient_email = 'xxx@xxx.com.br'
+        subject = f'Anuências_{dia}'
+        dia = datetime.date.today()
+        message_body = f'Segue em anexo a planilha das anuências extraídas em {dia}.\n\nAtenciosamente\n\nEduardo Morais Jucá\n\nAnalista de Gestão: Administrador\nGerênia de Inteligência e Atenção ao Cliente'
+
+        # Caminho para o arquivo de anexo
+        attachment_path = r'Z:\xxx\xxx.xlsx'
+
+        # Criar um objeto MIMEMultipart para a mensagem
+        msg = MIMEMultipart()
+        msg['From'] = sender_email
+        msg['To'] = recipient_email
+        msg['Subject'] = subject
+
+        # Adicionar corpo do e-mail
+        msg.attach(MIMEText(message_body, 'plain'))
+
+        # Adicionar anexo
+        with open(attachment_path, 'rb') as attachment_file:
+            attach = MIMEApplication(attachment_file.read(), _subtype="xlsx")
+            attach.add_header('Content-Disposition', 'attachment', filename='ANUÊNCIA_CONSOLIDADA_COMPLETA.xlsx')
+            msg.attach(attach)
+
+        # Enviar o e-mail usando o servidor SMTP
+        try:
+            server = smtplib.SMTP(smtp_server, smtp_port)
+            server.starttls()  # Iniciar uma conexão TLS (criptografada) com o servidor
+            server.login(smtp_username, smtp_password)
+            server.sendmail(sender_email, recipient_email, msg.as_string())
+            server.quit()
+            print('E-mail enviado com sucesso.')
+        except Exception as e:
+            print('Erro ao enviar o e-mail:', str(e))
+        
+      
+
+
+   
+    except:
+        # Configurar as informações do servidor SMTP
+        smtp_server = 'webmail.compesa.com.br'
+        smtp_port = 587  # Porta típica para envio de e-mails seguro (TLS)
+        smtp_username = 'xxxxxx'
+        smtp_password = 'xxxxxx'
+
+        # Configurar as informações do e-mail
+        sender_email = 'xxxxxx@compesa.com.br'
+        recipient_email = 'xxxxxx@compesa.com.br'
+        subject = f'Falha na Execução do Script'
+        message_body = f'Houve uma falha na execução do Script. Tente novamente, e se ocorrer um novo erro, entre em contato com a GIC.\n\nAtenciosamente,\n\nEduardo Morais Jucá\n\nAnalista de Gestão: Administrador\nGerência de Inteligência e Atenção ao Cliente'
+        # Criar um objeto MIMEMultipart para a mensagem
+        msg = MIMEMultipart()
+        msg['From'] = sender_email
+        msg['To'] = recipient_email
+        msg['Subject'] = subject
+
+        # Adicionar corpo do e-mail
+        msg.attach(MIMEText(message_body, 'plain'))
+        # Enviar o e-mail usando o servidor SMTP
+        server = smtplib.SMTP(smtp_server, smtp_port)
+        server.starttls()  # Iniciar uma conexão TLS (criptografada) com o servidor
+        server.login(smtp_username, smtp_password)
+        server.sendmail(sender_email, recipient_email, msg.as_string())
+        server.quit()
+        # Configurar as informações do servidor SMTP
+        smtp_server = 'webmail.compesa.com.br'
+        smtp_port = 587  # Porta típica para envio de e-mails seguro (TLS)
+        smtp_username = 'xxxxxx'
+        smtp_password = 'xxxxx'
+
+        # Configurar as informações do e-mail
+        sender_email = 'xxxxx@compesa.com.br'
+        recipient_email = 'xxxxx@compesa.com.br'
+        subject = f'Falha na Execução do Script'
+        message_body = f'Houve uma falha na execução do Script. Tente novamente, e se ocorrer um novo erro, entre em contato com a GIC.\n\nAtenciosamente,\n\nEduardo Morais Jucá\n\nAnalista de Gestão: Administrador\nGerência de Inteligência e Atenção ao Cliente'
+        # Criar um objeto MIMEMultipart para a mensagem
+        msg = MIMEMultipart()
+        msg['From'] = sender_email
+        msg['To'] = recipient_email
+        msg['Subject'] = subject
+
+        # Adicionar corpo do e-mail
+        msg.attach(MIMEText(message_body, 'plain'))
+        # Enviar o e-mail usando o servidor SMTP
+        server = smtplib.SMTP(smtp_server, smtp_port)
+        server.starttls()  # Iniciar uma conexão TLS (criptografada) com o servidor
+        server.login(smtp_username, smtp_password)
+        server.sendmail(sender_email, recipient_email, msg.as_string())
+        server.quit()
+    
+        #Apagar pasta arquivo
+    
+        import glob
+    
+        pasta1 = r'C:\Users\eduardomorais\Downloads'
+        files1 = glob.glob(pasta1+'/*')
+        for file1 in files1:
+            os.remove(file1)
+
+
+#Agendar Execução
+
+!pip install schedule
+import schedule
+import time
+import schedule
+schedule.every().day.at("xx:xx").do(anu)
+while True:
+    schedule.run_pending()
+    time.sleep(1)
